@@ -8,10 +8,10 @@ An AI-powered CRM system for healthcare professional (HCP) interaction managemen
 <img src="1.png" alt="Home Screen">
 <img src="2.png" alt="After User Inputs">
 <img src="3.png" alt="Key Features">
-
-<video src="Showcasing_With_Explanation.mp4" width="100%" controls>
+<video src="https://githubusercontent.com" width="100%" controls>
   Your browser does not support the video tag.
 </video>
+
 ## Overview
 
 This project implements an AI-first CRM module that allows sales representatives to log, edit, search, and summarize HCP interactions using natural language. The system uses a LangGraph-based agent with five specialized tools to handle all CRM operations through conversational AI.
