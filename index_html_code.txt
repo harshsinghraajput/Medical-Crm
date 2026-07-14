@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-First CRM - HCP Module</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* =============================================================
+       CSS VARIABLES: Color scheme for the entire app
+       ============================================================= */
+    :root {
+      --bg: #0f1117; --bg-card: #1a1d27; --bg-input: #232736;
+      --border: #2d3148; --text: #e4e4e7; --text-dim: #71717a;
+      --accent: #6366f1; --accent-hover: #4f46e5;
+      --green: #22c55e; --green-dim: rgba(34,197,94,0.12);
+      --yellow: #eab308; --blue: #3b82f6; --purple: #a855f7;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+
+    /* =============================================================
+       TOP BAR: Header with logo, title, and badge
+       ============================================================= */
+    .top-bar { height: 52px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--bg-card); }
+    .top-bar h1 { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .top-bar .logo { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #fff; font-weight: 800; }
+    .top-bar .badge { padding: 3px 10px; border-radius: 100px; font-size: 0.7rem; font-weight: 600; background: var(--green-dim); color: var(--green); }
+    .top-bar .tools-info { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* =============================================================
+       APP LAYOUT: Two-column layout (sidebar + main chat)
+       ============================================================= */
+    .app { display: flex; height: calc(100vh - 52px); }
+
+    /* =============================================================
+       SIDEBAR: Left panel with the interaction form
+       Auto-populated by AI when user logs interactions
+       ============================================================= */
+    .sidebar { width: 380px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg); flex-shrink: 0; }
+    .sidebar-head { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .sidebar-head h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+    .sidebar-head p { font-size: 0.75rem; color: var(--text-dim); }
+    .form-scroll { flex: 1; overflow-y: auto; padding: 14px 20px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.83rem; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { min-height: 55px; resize: vertical; }
+    .form-group select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+    .form-group select option { background: var(--bg-input); }
+    .section-title { font-size: 0.68rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+    .form-msg { padding: 9px 13px; border-radius: 8px; font-size: 0.76rem; margin-bottom: 12px; }
+    .form-msg.ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .form-msg.info { background: rgba(59,130,246,0.1); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+    .sidebar-foot { padding: 10px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+
+    /* =============================================================
+       BUTTONS: Various button styles
+       ============================================================= */
+    .btn { padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; border: none; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    .btn-p { background: var(--accent); color: #fff; }
+    .btn-p:hover { background: var(--accent-hover); }
+    .btn-o { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-o:hover { border-color: var(--text-dim); color: var(--text); }
+    .btn-g { background: var(--green); color: #fff; }
+    .btn-g:hover { background: #16a34a; }
+
+    /* =============================================================
+       MAIN CHAT AREA: Right panel with chat interface
+       ============================================================= */
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .chat-head { padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--bg-card); }
+    .chat-head h2 { font-size: 0.9rem; font-weight: 700; }
+    .chat-head p { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* =============================================================
+       MESSAGES: Chat message bubbles and styling
+       ============================================================= */
+    .messages { flex: 1; overflow-y: auto; padding: 18px 24px; display: flex; flex-direction: column; gap: 14px; }
+    .msg { max-width: 78%; animation: fadeIn 0.3s; }
+    .msg.user { align-self: flex-end; }
+    .msg.bot { align-self: flex-start; }
+    .bubble { padding: 11px 15px; border-radius: 12px; font-size: 0.86rem; line-height: 1.6; white-space: pre-wrap; }
+    .msg.user .bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+    .msg.bot .bubble { background: var(--bg-card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .meta { font-size: 0.68rem; color: var(--text-dim); margin-top: 3px; padding: 0 4px; }
+    .msg.user .meta { text-align: right; }
+    .tool-tag { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 0.66rem; font-weight: 600; background: rgba(168,85,247,0.12); color: var(--purple); margin-top: 5px; }
+
+    /* =============================================================
+       TYPING INDICATOR: Animated dots while AI is processing
+       ============================================================= */
+    .typing { display: flex; gap: 4px; padding: 11px 15px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); animation: bounce 1.4s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* =============================================================
+       INPUT BAR: Message input and send button
+       ============================================================= */
+    .input-bar { padding: 14px 24px; border-top: 1px solid var(--border); background: var(--bg-card); display: flex; gap: 8px; }
+    .input-bar input { flex: 1; padding: 11px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.88rem; outline: none; }
+    .input-bar input:focus { border-color: var(--accent); }
+    .input-bar button { padding: 11px 18px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-family: 'Inter'; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .input-bar button:hover { background: var(--accent-hover); }
+    .input-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* =============================================================
+       WELCOME SCREEN: Shown when no messages yet
+       ============================================================= */
+    .welcome { text-align: center; padding: 50px 20px; color: var(--text-dim); }
+    .welcome .icon { font-size: 2.8rem; margin-bottom: 14px; color: var(--purple); }
+    .welcome h3 { color: var(--text); margin-bottom: 6px; }
+    .welcome p { font-size: 0.83rem; max-width: 380px; margin: 0 auto; }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* =============================================================
+       CHOICE BUTTONS: Clickable options in chat (Yes/No, fields)
+       ============================================================= */
+    .choice-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .choice-btn { padding: 8px 20px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; border: none; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    .choice-btn.yes { background: var(--accent); color: #fff; }
+    .choice-btn.yes:hover { background: var(--accent-hover); }
+    .choice-btn.no { background: var(--green); color: #fff; }
+    .choice-btn.no:hover { background: #16a34a; }
+    .choice-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* =============================================================
+       SUCCESS POPUP: Thumbs-up animation after auto-save
+       ============================================================= */
+    .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    .popup-overlay.active { display: flex; }
+    .success-box { background: rgba(34,197,94,0.12); border: 2px solid var(--green); border-radius: 20px; padding: 40px 48px; text-align: center; max-width: 420px; width: 90%; animation: popIn 0.4s ease; }
+    .success-box .thumbs { font-size: 4rem; animation: thumbsBounce 0.6s ease; color: var(--green); }
+    .success-box h2 { font-size: 1.3rem; color: var(--green); margin: 14px 0 6px; }
+    .success-box p { font-size: 0.85rem; color: var(--text-dim); }
+    .success-box .btn { margin-top: 18px; padding: 10px 28px; }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+    @keyframes thumbsBounce { 0% { transform: scale(0); } 50% { transform: scale(1.3); } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
+    @media (max-width: 768px) { .app { flex-direction: column; } .sidebar { width: 100%; height: 45vh; border-right: none; border-bottom: 1px solid var(--border); } .main { height: 55vh; } }
+  </style>
+</head>
+<body>
+  <!-- =============================================================
+       TOP BAR: Header with logo and badge
+       ============================================================= -->
+  <div class="top-bar">
+    <h1><span class="logo">CRM</span> AI-First CRM</h1>
+    <span class="tools-info">5 LangGraph Tools Active</span>
+    <span class="badge">HCP Module</span>
+  </div>
+
+  <!-- =============================================================
+       MAIN APP: Two-column layout
+       ============================================================= -->
+  <div class="app">
+    <!-- =============================================================
+         SIDEBAR: Left panel with interaction form
+         Auto-populated by AI when user logs interactions
+         ============================================================= -->
+    <div class="sidebar">
+      <div class="sidebar-head"><h2>Interaction Form</h2><p>Auto-populated by AI assistant</p></div>
+      <div class="form-scroll">
+        <div id="formStatus" class="form-msg info">Start chatting with the AI to populate this form</div>
+
+        <!-- HCP Details Section -->
+        <div class="section-title">HCP Details</div>
+        <div class="form-group"><label>HCP Name</label><input type="text" id="f_name" placeholder="AI will populate..."></div>
+        <div class="form-group"><label>Specialty</label><select id="f_specialty"><option value="">Select specialty...</option><option>Cardiology</option><option>Oncology</option><option>Neurology</option><option>Orthopedics</option><option>Pediatrics</option><option>Dermatology</option><option>Gastroenterology</option><option>Pulmonology</option><option>Nephrology</option><option>Endocrinology</option><option>Rheumatology</option><option>Hematology</option><option>Psychiatry</option><option>Ophthalmology</option><option>Urology</option><option>Gynecology</option><option>Surgery</option><option>Radiology</option><option>Anesthesiology</option><option>Internal Medicine</option><option>Family Medicine</option><option>General Practice</option><option>Emergency Medicine</option></select></div>
+        <div class="form-group"><label>Hospital</label><input type="text" id="f_hospital" placeholder="Hospital name..."></div>
+
+        <!-- Interaction Details Section -->
+        <div class="section-title">Interaction Details</div>
+        <div class="form-group"><label>Interaction Type</label><select id="f_type"><option value="">Select type...</option><option>Meeting</option><option>Visit</option><option>Phone Call</option><option>Virtual Meeting</option><option>Conference</option><option>Presentation</option><option>Lunch Meeting</option><option>Email</option><option>Webinar</option></select></div>
+        <div class="form-group"><label>Date</label><input type="date" id="f_date"></div>
+        <div class="form-group"><label>Sentiment</label><select id="f_sentiment"><option value="">Select...</option><option>Positive</option><option>Neutral</option><option>Negative</option></select></div>
+
+        <!-- Discussion Section -->
+        <div class="section-title">Discussion</div>
+        <div class="form-group"><label>Topics Discussed</label><textarea id="f_topics" placeholder="Key topics..."></textarea></div>
+        <div class="form-group"><label>Materials Shared</label><textarea id="f_materials" placeholder="Brochures, samples..."></textarea></div>
+
+        <!-- Follow-up Section -->
+        <div class="section-title">Follow-up</div>
+        <div class="form-group"><label>Follow-up Actions</label><textarea id="f_followup" placeholder="Next steps..."></textarea></div>
+        <div class="form-group"><label>Notes</label><textarea id="f_notes" placeholder="Additional notes..."></textarea></div>
+      </div>
+
+      <!-- Form Footer: Clear and Submit buttons -->
+      <div class="sidebar-foot">
+        <button class="btn btn-o" id="clearBtn">Clear Form</button>
+        <button class="btn btn-g" id="submitBtn" style="display:none">Submit</button>
+      </div>
+    </div>
+
+    <!-- =============================================================
+         MAIN CHAT: Right panel with chat interface
+         ============================================================= -->
+    <div class="main">
+      <div class="chat-head"><h2>AI Assistant</h2><p>Describe your interaction -- AI will fill the form</p></div>
+      <!-- =============================================================
+           MESSAGES AREA: Chat conversation history
+           ============================================================= -->
+      <div class="messages" id="chatMessages">
+        <!-- Welcome screen with template -->
+        <div class="welcome"><div class="icon">&#9993;</div><h3>Welcome to AI CRM Assistant</h3><p>Describe your HCP interaction in natural language</p>
+          <div style="margin-top:16px; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;">
+            <div style="font-size:0.72rem; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Try saying something like:</div>
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:0.82rem; color:var(--text); line-height:1.7;">
+              <div style="color:var(--accent); font-weight:600; margin-bottom:4px;">Template:</div>
+              Met with <span style="color:var(--green);">Dr. [Name]</span>, <span style="color:var(--green);">[Specialty]</span> at <span style="color:var(--green);">[Hospital]</span>. Discussed <span style="color:var(--green);">[topics]</span>. Sentiment: <span style="color:var(--green);">[Positive/Neutral/Negative]</span>.
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-dim); margin-top:8px;">Example: "Met with Dr. Sarah, Cardiology at City Hospital. Discussed new treatment plan. Very positive meeting."</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================
+           INPUT BAR: Message input and send button
+           ============================================================= -->
+      <div class="input-bar">
+        <input type="text" id="chatInput" placeholder="Describe your HCP interaction...">
+        <button id="sendBtn">Send</button>
+      </div>
+
+      <!-- =============================================================
+           QUICK EDIT BAR: Click buttons or type 1-9 to edit fields
+           Appears after logging an interaction
+           ============================================================= -->
+      <div class="quick-edit" id="quickEdit" style="display:none; padding:8px 24px; border-top:1px solid var(--border); background:var(--bg-card);">
+        <div style="font-size:0.7rem; color:var(--text-dim); margin-bottom:6px;">Quick Edit - Click or type number:</div>
+        <div class="choice-row" style="flex-wrap:wrap; gap:6px;">
+          <button class="choice-btn yes" data-qe="1" style="padding:5px 12px; font-size:0.75rem;">1. Name</button>
+          <button class="choice-btn yes" data-qe="2" style="padding:5px 12px; font-size:0.75rem;">2. Specialty</button>
+          <button class="choice-btn yes" data-qe="3" style="padding:5px 12px; font-size:0.75rem;">3. Hospital</button>
+          <button class="choice-btn yes" data-qe="4" style="padding:5px 12px; font-size:0.75rem;">4. Type</button>
+          <button class="choice-btn yes" data-qe="5" style="padding:5px 12px; font-size:0.75rem;">5. Date</button>
+          <button class="choice-btn yes" data-qe="6" style="padding:5px 12px; font-size:0.75rem;">6. Sentiment</button>
+          <button class="choice-btn yes" data-qe="7" style="padding:5px 12px; font-size:0.75rem;">7. Topics</button>
+          <button class="choice-btn yes" data-qe="8" style="padding:5px 12px; font-size:0.75rem;">8. Materials</button>
+          <button class="choice-btn yes" data-qe="9" style="padding:5px 12px; font-size:0.75rem;">9. Follow-up</button>
+          <button class="choice-btn no" data-qe="submit" style="padding:5px 12px; font-size:0.75rem;">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================================
+       SUCCESS POPUP: Thumbs-up animation after auto-save
+       ============================================================= -->
+  <div class="popup-overlay" id="successPopup">
+    <div class="success-box">
+      <div class="thumbs">&#128077;</div>
+      <h2>Successfully Submitted!</h2>
+      <p>Your interaction has been saved.</p>
+      <button class="btn btn-p" id="okBtn">OK</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // AI-First CRM - Frontend JavaScript
+    // =========================================================================
+    // This is the main frontend code that handles:
+    // - User interaction with the chat interface
+    // - Sending messages to the backend API
+    // - Auto-filling the form based on AI responses
+    // - Quick edit functionality (click buttons or type numbers 1-9)
+    // - Auto-save after 1 minute of inactivity
+    // - Success popup animation
+    //
+    // HOW IT WORKS:
+    // 1. User types message in chat input
+    // 2. Frontend sends to /api/chat endpoint
+    // 3. Backend returns response + form_data
+    // 4. Frontend displays response and auto-fills form
+    // 5. Quick edit bar appears for easy field editing
+    //
+    // QUICK EDIT FLOW:
+    // - Type "1" → placeholder changes to "Type new value for HCP Name..."
+    // - Type the value → sends "change hcp_name to [value]"
+    // - Form updates instantly
+    // =========================================================================
+    (function() {
+      // API URL - adapts to current host (works on any port)
+      var API = window.location.origin;
+      // Session ID - unique for each browser tab
+      var SID = "session-" + Date.now();
+      // Loading state - prevents multiple simultaneous requests
+      var loading = false;
+      // Current field being edited - null when not editing
+      var editingField = null;
+
+      // =========================================================================
+      // FIELD MAPPING: Maps backend field names to HTML element IDs
+      // Used to auto-fill the form when backend returns form_data
+      // =========================================================================
+      var FIELDS = {
+        hcp_name: "f_name", specialty: "f_specialty", hospital: "f_hospital",
+        interaction_type: "f_type", date: "f_date", sentiment: "f_sentiment",
+        topics_discussed: "f_topics", materials_shared: "f_materials",
+        follow_up_actions: "f_followup", notes: "f_notes"
+      };
+
+      var FIELD_NAMES = {
+        "1": "hcp_name", "2": "specialty", "3": "hospital", "4": "interaction_type",
+        "5": "date", "6": "sentiment", "7": "topics_discussed", "8": "materials_shared",
+        "9": "follow_up_actions"
+      };
+
+      var FIELD_LABELS = {
+        hcp_name: "HCP Name", specialty: "Specialty", hospital: "Hospital",
+        interaction_type: "Interaction Type", date: "Date", sentiment: "Sentiment",
+        topics_discussed: "Topics", materials_shared: "Materials",
+        follow_up_actions: "Follow-up"
+      };
+
+      // Idle timer for auto-save after 1 minute
+      var idleTimer = null;
+      function startIdleTimer() {
+        stopIdleTimer();
+        idleTimer = setTimeout(function() {
+          showSuccess();
+        }, 60000); // 60 seconds = 1 minute
+      }
+      function stopIdleTimer() {
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+      }
+
+      function $(id) { return document.getElementById(id); }
+
+      function setForm(data) {
+        if (!data) return;
+        var keys = Object.keys(FIELDS);
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i];
+          if (data[k] !== undefined && data[k] !== null) {
+            var el = $(FIELDS[k]);
+            if (el) el.value = data[k];
+          }
+        }
+      }
+
+      function clearForm() {
+        var ids = Object.values(FIELDS);
+        for (var i = 0; i < ids.length; i++) { var el = $(ids[i]); if (el) el.value = ""; }
+        $("formStatus").className = "form-msg info";
+        $("formStatus").textContent = "Form cleared";
+        $("submitBtn").style.display = "none";
+        editingField = null;
+      }
+
+      function addMsg(role, content, toolCalls, extra) {
+        var box = $("chatMessages");
+        var w = box.querySelector(".welcome");
+        if (w) w.remove();
+        var div = document.createElement("div");
+        div.className = "msg " + (role === "user" ? "user" : "bot");
+        var html = '<div class="bubble">' + escHtml(content) + '</div>';
+        if (toolCalls && toolCalls.length > 0) html += '<div class="tool-tag">Tools: ' + toolCalls.join(", ") + '</div>';
+        if (extra) html += extra;
+        html += '<div class="meta">' + (role === "user" ? "You" : "AI Assistant") + '</div>';
+        div.innerHTML = html;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+        return div;
+      }
+
+      function showTyping() {
+        var box = $("chatMessages");
+        var div = document.createElement("div");
+        div.className = "msg bot"; div.id = "typingMsg";
+        div.innerHTML = '<div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+        box.appendChild(div); box.scrollTop = box.scrollHeight;
+      }
+      function hideTyping() { var t = $("typingMsg"); if (t) t.remove(); }
+      function escHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>"); }
+
+      function showSuccess() { $("successPopup").classList.add("active"); }
+
+      // =====================================================================
+      // EDIT FLOW: Click field buttons to edit directly
+      // =====================================================================
+      function askWhatToChange() {
+        editingField = null;
+        var extra = '<div class="choice-row">' +
+          '<button class="choice-btn yes" data-field="hcp_name">1. Name</button>' +
+          '<button class="choice-btn yes" data-field="specialty">2. Specialty</button>' +
+          '<button class="choice-btn yes" data-field="hospital">3. Hospital</button>' +
+          '<button class="choice-btn yes" data-field="interaction_type">4. Type</button>' +
+          '<button class="choice-btn yes" data-field="sentiment">5. Sentiment</button>' +
+          '<button class="choice-btn yes" data-field="topics_discussed">6. Topics</button>' +
+          '<button class="choice-btn yes" data-field="materials_shared">7. Materials</button>' +
+          '<button class="choice-btn yes" data-field="follow_up_actions">8. Follow-up</button>' +
+          '<button class="choice-btn no" data-field="submit">Submit</button></div>';
+        var div = addMsg("assistant", "Click a field to edit:", null, extra);
+        bindFieldBtns(div);
+      }
+
+      function bindFieldBtns(container) {
+        var btns = container.querySelectorAll(".choice-btn");
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].addEventListener("click", function() {
+            stopIdleTimer();
+            var field = this.getAttribute("data-field");
+            if (field === "submit") { showSuccess(); return; }
+            editingField = field;
+            $("chatInput").placeholder = "Type new value for " + (FIELD_LABELS[field] || field) + "...";
+            $("chatInput").focus();
+          });
+        }
+      }
+
+      // Quick edit bar buttons
+      function bindQuickEdit() {
+        var btns = document.querySelectorAll("[data-qe]");
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].addEventListener("click", function() {
+            stopIdleTimer();
+            var field = this.getAttribute("data-qe");
+            if (field === "submit") { showSuccess(); return; }
+            var fieldKey = FIELD_NAMES[field] || field;
+            editingField = fieldKey;
+            $("chatInput").placeholder = "Type new value for " + (FIELD_LABELS[fieldKey] || fieldKey) + "...";
+            $("chatInput").focus();
+          });
+        }
+      }
+      bindQuickEdit();
+
+      // Show quick edit after logging
+      function showQuickEdit() { $("quickEdit").style.display = "block"; }
+      function hideQuickEdit() { $("quickEdit").style.display = "none"; }
+
+      // =====================================================================
+      // SEND MESSAGE: Handle user input
+      // =====================================================================
+      // This is the main function that handles all user input.
+      //
+      // FLOW:
+      // 1. User types message and presses Enter or clicks Send
+      // 2. Check if it's a number (1-9) → quick edit mode
+      // 3. Check if we're editing a field → send "change X to Y"
+      // 4. Otherwise → send as normal message to backend
+      // 5. Backend responds with form_data → auto-fill form
+      //
+      // QUICK EDIT:
+      // - User types "6" → editingField = "sentiment"
+      // - Placeholder changes to "Type new value for Sentiment..."
+      // - User types "Positive" → sends "change sentiment to Positive"
+      // - Form updates instantly
+      // =====================================================================
+      function sendToBackend(msg, cb) {
+        showTyping();
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", API + "/api/chat", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.timeout = 30000;
+        xhr.onload = function() { hideTyping(); try { cb(JSON.parse(xhr.responseText)); } catch(e) { cb(null); } };
+        xhr.onerror = function() { hideTyping(); addMsg("assistant", "Cannot connect."); cb(null); };
+        xhr.ontimeout = function() { hideTyping(); addMsg("assistant", "Timed out."); cb(null); };
+        xhr.send(JSON.stringify({ message: msg, session_id: SID }));
+      }
+
+      function sendMsg() {
+        var input = $("chatInput");
+        var msg = input.value.trim();
+        if (!msg || loading) return;
+        loading = true; $("sendBtn").disabled = true;
+        addMsg("user", msg); input.value = "";
+
+        // =================================================================
+        // QUICK EDIT: Handle number input (1-9)
+        // When user types a number, switch to edit mode for that field
+        // =================================================================
+        if (!editingField && /^[1-9]$/.test(msg)) {
+          var fieldKey = FIELD_NAMES[msg];
+          if (fieldKey) {
+            editingField = fieldKey;
+            loading = false; $("sendBtn").disabled = false;
+            $("chatInput").value = "";
+            $("chatInput").placeholder = "Type new value for " + (FIELD_LABELS[fieldKey] || fieldKey) + "...";
+            $("chatInput").focus();
+            return;
+          }
+        }
+
+        // =================================================================
+        // EDIT MODE: If we're editing a field, send as edit command
+        // Converts user input to "change [field] to [value]" format
+        // =================================================================
+        if (editingField) {
+          var editMsg = "change " + editingField + " to " + msg;
+          editingField = null;
+          $("chatInput").placeholder = "Describe your HCP interaction...";
+          sendToBackend(editMsg, function(data) {
+            loading = false; $("sendBtn").disabled = false;
+            if (!data) return;
+            addMsg("assistant", data.response, data.tool_calls);
+            if (data.form_data) setForm(data.form_data);
+            $("formStatus").className = "form-msg ok";
+            $("formStatus").textContent = "Form updated by AI";
+            $("submitBtn").style.display = "inline-block";
+            startIdleTimer();
+          });
+          return;
+        }
+
+        sendToBackend(msg, function(data) {
+          loading = false; $("sendBtn").disabled = false;
+          if (!data) return;
+
+          var didLog = false;
+          var didEdit = false;
+          if (data.tool_calls) {
+            for (var i = 0; i < data.tool_calls.length; i++) {
+              if (data.tool_calls[i].indexOf("log_interaction") !== -1) didLog = true;
+              if (data.tool_calls[i].indexOf("edit_interaction") !== -1) didEdit = true;
+            }
+          }
+
+          if (didLog) {
+            addMsg("assistant", data.response, data.tool_calls);
+            if (data.form_data) {
+              setForm(data.form_data);
+              $("formStatus").className = "form-msg ok";
+              $("formStatus").textContent = "Form updated by AI";
+              $("submitBtn").style.display = "inline-block";
+            }
+            showQuickEdit();
+            startIdleTimer(); // Start 1-minute auto-save timer
+          } else if (didEdit) {
+            addMsg("assistant", data.response, data.tool_calls);
+            if (data.form_data) setForm(data.form_data);
+            startIdleTimer(); // Reset timer on edit
+          } else {
+            addMsg("assistant", data.response, data.tool_calls);
+            if (data.form_data) setForm(data.form_data);
+          }
+        });
+      }
+
+      $("sendBtn").addEventListener("click", sendMsg);
+      $("chatInput").addEventListener("keydown", function(e) { if (e.key === "Enter") sendMsg(); });
+      $("clearBtn").addEventListener("click", function() { clearForm(); stopIdleTimer(); hideQuickEdit(); });
+      $("submitBtn").addEventListener("click", function() { stopIdleTimer(); hideQuickEdit(); showSuccess(); });
+      $("okBtn").addEventListener("click", function() {
+        stopIdleTimer(); hideQuickEdit();
+        $("successPopup").classList.remove("active"); clearForm();
+        $("chatMessages").innerHTML = '<div class="welcome"><div class="icon">&#9993;</div><h3>Welcome to AI CRM Assistant</h3><p>Describe your HCP interaction in natural language</p><div style="margin-top:16px; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;"><div style="font-size:0.72rem; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Try saying something like:</div><div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:0.82rem; color:var(--text); line-height:1.7;"><div style="color:var(--accent); font-weight:600; margin-bottom:4px;">Template:</div>Met with <span style="color:var(--green);">Dr. [Name]</span>, <span style="color:var(--green);">[Specialty]</span> at <span style="color:var(--green);">[Hospital]</span>. Discussed <span style="color:var(--green);">[topics]</span>. Sentiment: <span style="color:var(--green);">[Positive/Neutral/Negative]</span>.</div><div style="font-size:0.72rem; color:var(--text-dim); margin-top:8px;">Example: "Met with Dr. Sarah, Cardiology at City Hospital. Discussed new treatment plan. Very positive meeting."</div></div></div>';
+        bindSugBtns();
+      });
+
+      // Clear form on page load
+      clearForm();
+      // Reset backend form state
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", API + "/api/form/reset", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.send();
+
+    })();
+  </script>
+</body>
+</html>
