@@ -5,7 +5,7 @@ An AI-powered CRM system for healthcare professional (HCP) interaction managemen
 
 ## Live Demo
 
-![CRM Screenshot](crm-webpage.png)
+<img src="1.png" alt="home Screen">
 
 ## Overview
 
