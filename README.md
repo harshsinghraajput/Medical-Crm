@@ -8,8 +8,8 @@ An AI-powered CRM system for healthcare professional (HCP) interaction managemen
 <img src="1.png" alt="Home Screen">
 <img src="2.png" alt="After User Inputs">
 <img src="3.png" alt="Key Features">
-<video width="640" height="360" controls poster="1.png">
-  <source src="Showcasing With Explanation.mp4" type="video/mp4">
+
+<video src="https://github.com/harshsinghraajput/Medical-Crm/blob/main/Showcasing%20With%20Explanation.mp4" width="100%" controls>
   Your browser does not support the video tag.
 </video>
 ## Overview
